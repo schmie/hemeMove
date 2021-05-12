@@ -1,15 +1,12 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTEST_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_GRAPHCOMMSTESTS_H
 
+#include "redblood/RBCConfig.h"
 #include "unittests/helpers/FolderTestFixture.h"
 #include "unittests/redblood/Fixtures.h"
 #include "unittests/redblood/parallel/Fixtures.h"
@@ -23,6 +20,7 @@ namespace hemelb
       class GraphCommsTests : public helpers::FolderTestFixture
       {
           CPPUNIT_TEST_SUITE (GraphCommsTests);
+          CPPUNIT_TEST (testLexicographicalOrderingOfVectors);
           CPPUNIT_TEST (testDumbGraphCommunicator);
           CPPUNIT_TEST (testGraphCommunicator);
           CPPUNIT_TEST (testComputeCellsEffectiveSize);
@@ -31,6 +29,7 @@ namespace hemelb
 
         public:
           void setUp();
+          void testLexicographicalOrderingOfVectors();
           void testDumbGraphCommunicator();
           void testGraphCommunicator();
           void testComputeCellsEffectiveSize();
@@ -85,6 +84,41 @@ namespace hemelb
                                                                                       "1",
                                                                                       "-ss",
                                                                                       "1111" });
+      }
+
+      void GraphCommsTests::testLexicographicalOrderingOfVectors() {
+	auto cmp = hemelb::redblood::parallel::VectorLexicographicalOrdering<util::Vector3D<int>>{};
+
+	util::Vector3D<int> foo{0, 0, 0};
+	util::Vector3D<int> bar{1, 0, 0};
+
+	// // Catch implementation
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 1, 0};
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 0, 1};
+	// CHECK(cmp(foo, bar));
+
+	// bar = {0, 0, 0};
+	// CHECK(!cmp(foo, bar));
+
+	// foo = {0, 0, 1};
+	// CHECK(!cmp(foo, bar));
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 1, 0};
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 0, 1};
+	CPPUNIT_ASSERT(cmp(foo, bar));
+
+	bar = {0, 0, 0};
+	CPPUNIT_ASSERT(!cmp(foo, bar));
+
+	foo = {0, 0, 1};
+	CPPUNIT_ASSERT(!cmp(foo, bar));
       }
 
       void GraphCommsTests::testDumbGraphCommunicator()
@@ -156,10 +190,14 @@ namespace hemelb
         auto master = CreateMasterSim(comms);
         CPPUNIT_ASSERT(master);
 
+	auto simConf = master->GetSimConfig();
+	CPPUNIT_ASSERT(simConf->HasRBCSection());
+	auto rbcConf = simConf->GetRBCConfig();
+	CPPUNIT_ASSERT(rbcConf);
         // Biggest cell radius in lattice units times a tolerance
         CPPUNIT_ASSERT_DOUBLES_EQUAL(hemelb::redblood::parallel::MAXIMUM_SIZE_TO_RADIUS_RATIO
-                                         * (8e-06 / master->GetSimConfig()->GetVoxelSize()),
-                                     ComputeCellsEffectiveSize(master->GetSimConfig()->GetRBCMeshes()),
+                                         * (8e-06 / simConf->GetVoxelSize()),
+                                     ComputeCellsEffectiveSize(rbcConf->GetRBCMeshes()),
                                      1e-9);
       }
 

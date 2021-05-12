@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_WALL_NODE_DNC_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_WALLCELLPAIRITERATORTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_WALLCELLPAIRITERATORTESTS_H
 
 #include <iterator>
 #include <cppunit/TestFixture.h>
@@ -66,7 +62,7 @@ namespace hemelb
             auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
             auto const cell = std::make_shared<Cell>(tetrahedron());
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
 
             DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
@@ -90,7 +86,7 @@ namespace hemelb
             DivideConquer<WallNode> const wallDnC(3e0);
             auto const cell = std::make_shared<Cell>(tetrahedron());
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
             DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
@@ -106,7 +102,7 @@ namespace hemelb
             auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
             auto const cell = std::make_shared<Cell>(tetrahedron());
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = LatticePosition(0.5, 3.5 * cutoff, 3.5 * cutoff);
             cell->GetVertices()[1] = LatticePosition(0.49, 3.5 * cutoff, 3.5 * cutoff);
 
@@ -127,7 +123,7 @@ namespace hemelb
             auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
             auto const cell = std::make_shared<Cell>(tetrahedron());
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = LatticePosition(0.5, where * cutoff, where * cutoff);
 
             DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
@@ -157,7 +153,7 @@ namespace hemelb
             auto const wallDnC = createWallNodeDnC<Lattice>(*latticeData, cutoff, halo);
             auto const cell = std::make_shared<Cell>(tetrahedron());
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = LatticePosition(0.5, where * cutoff, where * cutoff);
             DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 
@@ -226,7 +222,7 @@ namespace hemelb
             auto const cell = std::make_shared<Cell>(tetrahedron());
             LatticePosition const node(0.6, where * cutoff, where * cutoff);
             *cell *= 3;
-            *cell += 100;
+            *cell += LatticePosition{100};
             cell->GetVertices()[0] = node;
             DivideConquerCells const cellDnC( { cell }, cutoff, interactionDistance);
 

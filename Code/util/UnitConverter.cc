@@ -1,11 +1,7 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include "util/UnitConverter.h"
 #include "constants.h"
@@ -15,24 +11,26 @@ namespace hemelb
   namespace util
   {
 
-    UnitConverter::UnitConverter(PhysicalTime timeStep, PhysicalDistance voxelSize,
-                                 PhysicalPosition latticeOrigin) :
+    UnitConverter::UnitConverter(PhysicalTime timeStep,
+				 PhysicalDistance voxelSize, PhysicalPosition latticeOrigin,
+				 PhysicalDensity fluidDensity, PhysicalPressure reference_pressure) :
         latticeDistance(voxelSize), latticeTime(timeStep),
-            latticeMass(BLOOD_DENSITY_Kg_per_m3 * voxelSize * voxelSize * voxelSize),
+            latticeMass(fluidDensity * voxelSize * voxelSize * voxelSize),
             latticeSpeed(voxelSize / latticeTime), latticeOrigin(latticeOrigin),
-            latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime))
+            latticePressure(latticeMass / (latticeDistance * latticeTime * latticeTime)),
+            reference_pressure_mmHg(reference_pressure)
     {
 
     }
 
     LatticePressure UnitConverter::ConvertPressureToLatticeUnits(PhysicalPressure pressure) const
     {
-      return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - REFERENCE_PRESSURE_mmHg);
+      return Cs2 + ConvertPressureDifferenceToLatticeUnits(pressure - reference_pressure_mmHg);
     }
 
     PhysicalPressure UnitConverter::ConvertPressureToPhysicalUnits(LatticePressure pressure) const
     {
-      return REFERENCE_PRESSURE_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
+      return reference_pressure_mmHg + ConvertPressureDifferenceToPhysicalUnits(pressure - Cs2);
     }
 
     LatticePressure UnitConverter::ConvertPressureDifferenceToLatticeUnits(

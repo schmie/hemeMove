@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_REDBLOOD_CELLBASE_H
 #define HEMELB_REDBLOOD_CELLBASE_H
@@ -196,12 +192,6 @@ namespace hemelb
         and (not std::is_pod<CellBase>::value),
         "Explicit type characteristics"
     );
-
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
-    //! Write cell-mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &, std::shared_ptr<CellBase const>,
-                      util::UnitConverter const&);
 
     // Holds the data of CellBase
     // Although its own data members are public, it can only be accessed by CellBase and derived

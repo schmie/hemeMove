@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_REDBLOOD_MESH_H
 #define HEMELB_REDBLOOD_MESH_H
@@ -17,10 +13,14 @@
 #include <string>
 #include <type_traits>
 #include <map>
+
+#include "redblood/MeshIdType.h"
 #include "util/Vector3D.h"
 #include "util/Matrix3D.h"
 #include "util/UnitConverter.h"
 #include "units.h"
+
+class vtkPolyData;
 
 namespace hemelb
 {
@@ -28,11 +28,10 @@ namespace hemelb
   {
     //! Holds raw mesh data
     //! Data is separated into vertices and triangular facets
-    class MeshData
+    struct MeshData
     {
-      public:
         //! Type of containers over indices
-        typedef std::array<size_t, 3> Facet;
+        typedef std::array<IdType, 3> Facet;
         //! Facet container type
         typedef std::vector<Facet> Facets;
         //! Vertex container type
@@ -55,8 +54,10 @@ namespace hemelb
     LatticeVolume volume(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
     LatticeArea area(MeshData const &mesh);
     LatticeArea area(MeshData::Vertices const &vertices, MeshData::Facets const &facets);
-    //! Orients facet inward, or inward
+    //! DEPRECATED. Orients facets outward, or inward. Algorithm cannot handle case of facet being coplanar with mesh barycenter.
     void orientFacets(MeshData &mesh, bool outward = true);
+    //! Orients facets inwards/outwards using VTK algorithm to determining outward facing direction. MeshData object should have been constructed from vtkPolyData object. See readMeshDataFromVTKPolyData.
+    unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward = true);
 
     //! Holds raw topology data
     class MeshTopology
@@ -65,7 +66,7 @@ namespace hemelb
         //! Type for map from vertices to facets
         typedef std::vector<std::set<std::size_t> > VertexToFacets;
         //! Type for map from facets to its neighbors
-        typedef std::vector<std::array<std::size_t, 3> > FacetNeighbors;
+        typedef std::vector<std::array<IdType, 3> > FacetNeighbors;
         //! For each vertex, lists the facet indices
         VertexToFacets vertexToFacets;
         //! For each facet, lists the neighboring facets
@@ -228,33 +229,6 @@ namespace hemelb
         and (not std::is_pod<Mesh>::value),
         "Explicit type characteristics"
     );
-
-    //! Read mesh from file
-    //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> readMesh(std::string const &filename);
-    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &);
-    //! Read mesh from file
-    //! Format is from T. Krueger's thesis
-    std::shared_ptr<MeshData> readMesh(std::istream &stream);
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &);
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &);
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
-                   util::UnitConverter const&);
-    //! Write mesh from file
-    //! Format is from T. Krueger's thesis
-    void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const &);
-    //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::ostream &, MeshData const &, util::UnitConverter const &);
-    //! Write mesh to file in VTK XML format
-    void writeVTKMesh(std::string const &, MeshData const &, util::UnitConverter const&);
-    //! Write mesh to file in VTK XML format
-    typedef std::vector<std::pair<std::string, std::vector<double>>> PointScalarData;
-    void writeVTKMesh(std::ostream &, MeshData::Vertices const &, MeshData::Facets const &,
-                      util::UnitConverter const&, PointScalarData pointScalarData = { });
 
     //! Tetrahedron of a depth
     //! Depth refers to the number of triangular subdivision in each facet

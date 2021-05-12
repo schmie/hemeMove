@@ -1,27 +1,32 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_STEERING_STEERINGCOMPONENT_H
 #define HEMELB_STEERING_STEERINGCOMPONENT_H
 
 #include "net/PhasedBroadcastRegular.h"
 #include "lb/SimulationState.h"
-#include "configuration/SimConfig.h"
 #include "steering/Network.h"
 #include "vis/DomainStats.h"
-#include "vis/Control.h"
-#include "steering/ImageSendComponent.h"
 
 namespace hemelb
 {
+  namespace configuration {
+    class SimConfig;
+  }
+  namespace util {
+    class UnitConverter;
+  }
+  namespace vis {
+    class Control;
+  }
+
   namespace steering
   {
+    class ImageSendComponent;
+
     enum parameter
     {
       SceneCentreX = 0,

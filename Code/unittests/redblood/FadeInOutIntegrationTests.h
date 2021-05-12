@@ -1,5 +1,9 @@
-#ifndef HEMELB_UNITTESTS_REDBLOOD_FADEINOUTINTEGRATION_H
-#define HEMELB_UNITTESTS_REDBLOOD_FADEINOUTINTEGRATION_H
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
+#ifndef HEMELB_UNITTESTS_REDBLOOD_FADEINOUTINTEGRATIONTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_FADEINOUTINTEGRATIONTESTS_H
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <boost/uuid/uuid_io.hpp>

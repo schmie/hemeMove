@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_BENDING_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_BENDINGTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_BENDINGTESTS_H
 
 #include <iomanip>
 #include <cppunit/TestFixture.h>
@@ -59,7 +55,7 @@ namespace hemelb
           {
             for (auto const theta : { 1e-2, 2e-2, 3e-2 })
             {
-              std::fill(forces.begin(), forces.end(), 0e0);
+              std::fill(forces.begin(), forces.end(), LatticeForceVector::Zero());
               vertices.back() = bending(mesh.vertices.back(), theta);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
               CPPUNIT_ASSERT_DOUBLES_EQUAL(std::sqrt(3.) * theta * theta * moduli, energy(), 1e-10);
@@ -170,7 +166,7 @@ namespace hemelb
             auto const theta = orientedAngle(Facet(vertices, mesh.facets, 0),
                                              Facet(vertices, mesh.facets, 1));
             auto const epsilon = 1e-4;
-            std::fill(forces.begin(), forces.end(), 0e0);
+            std::fill(forces.begin(), forces.end(), LatticeForceVector::Zero());
             auto const oldPos = vertices[node];
 
             auto const e0 = energyAndForces();
@@ -253,4 +249,3 @@ namespace hemelb
 }
 
 #endif  // ONCE
-

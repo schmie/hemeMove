@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <iterator>
 #include "redblood/buffer/Columns.h"
@@ -70,7 +66,7 @@ namespace hemelb
         // Rotation is opposite to the one that will be applied to the mesh
         auto const antiRot = rotationMatrix(colAxis, cellAxis);
         auto const extents = maxExtensions(vertices, antiRot * colAxis, antiRot * cylinder->normal)
-            + separation;
+	  + LatticePosition{separation};
 
         max.x = std::numeric_limits<LatticeCoordinate>::max();
         max.y = static_cast<LatticeCoordinate>(std::ceil(cylinder->radius / extents.y));
@@ -83,7 +79,7 @@ namespace hemelb
         major = colAxis.GetNormalised() * extents.z;
         minor = colAxis.GetNormalised().Cross(cylinder->normal.GetNormalised()) * extents.y;
         depth = cylinder->normal.GetNormalised() * extents.x;
-        spacing = (extents + separation) / 2.0;
+        spacing = (extents + LatticePosition{separation}) / 2.0;
 
         if (not IsInside())
           operator++();

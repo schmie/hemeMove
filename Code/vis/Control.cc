@@ -1,16 +1,13 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <vector>
 #include <cmath>
 #include <limits>
 
+#include "geometry/LatticeData.h"
 #include "log/Logger.h"
 #include "util/utilityFunctions.h"
 #include "vis/Control.h"
@@ -119,6 +116,8 @@ namespace hemelb
                                 const float &iLocal_ctr_z, const float &iLongitude,
                                 const float &iLatitude, const float &iZoom)
     {
+      constexpr float DEG_TO_RAD = (PI / 180.0);
+
       float rad = 5.F * vis->system_size;
       float dist = 0.5F * rad;
 

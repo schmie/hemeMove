@@ -1,25 +1,30 @@
-find_package(CPPUnit REQUIRED)
-include_directories(${CPPUNIT_INCLUDE_DIR})
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+if (HEMELB_BUILD_RBC)
+hemelb_dependency(cppunit use)
+# hemelb_dependency(vtk use)
 
 function(create_test_executable target includename)
   set(HEMELB_UNITTEST_INCLUDE ${includename})
   configure_file(main.in.cc "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
   add_executable(${target} "${CMAKE_CURRENT_BINARY_DIR}/${target}.cc")
-  add_codesign(${target})
   target_link_libraries(${target}
     ${heme_libraries}
     ${MPI_LIBRARIES}
     ${HDF5_LIBRARIES}
     ${PARMETIS_LIBRARIES}
-    ${TINYXML_LIBRARIES}
-    ${CPPUNIT_LIBRARY}
+    TinyXML::TinyXML
+    CPPUnit::CPPUnit
     ${Boost_LIBRARIES}
     ${CTEMPLATE_LIBRARIES}
     ${ZLIB_LIBRARIES}
     ${MPWide_LIBRARIES}
     #Because on some systems CPPUNIT needs to be linked to libdl
     ${CMAKE_DL_LIBS}
-  )
+    ${VTK_LIBRARIES}
+  )  
   set_target_properties(${target} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
 endfunction()
 
@@ -57,22 +62,16 @@ function(add_mpi_test_executable target includename)
 endfunction()
 
 if(NOT HEMELB_TESTDIR)
-  set(HEMELB_TESTDIR "${PROJECT_BINARY_DIR}/tests")
+  set(HEMELB_TESTDIR "${PROJECT_BINARY_DIR}/unittests")
   file(MAKE_DIRECTORY "${HEMELB_TESTDIR}")
 endif()
 
-add_test_executable(unittests_hemelb hemelb_unittests.h)
 add_test_executable(unittests_redblood redblood.h)
 # add_test_executable(unittests_redblood_integrations redblood_integrations.h)
 add_mpi_test_executable(unittests_redblood redblood_mpi.h)
 add_mpi_test_executable(unittests_redblood_integration redbloodMPIIntegrations.h)
 
-add_to_resources(resources/four_cube.gmy resources/four_cube.xml
-  resources/four_cube_multiscale.xml resources/config.xml
-  resources/config0_2_0.xml resources/config_file_inlet.xml
-  resources/iolet.txt resources/config-velocity-iolet.xml
-  resources/config_new_velocity_inlets.xml resources/xmltest.xml
-  resources/config_file_velocity_inlet.xml resources/velocity_inlet.txt
+add_to_resources(
   resources/red_blood_cell.txt resources/red_blood_cube.txt
   resources/large_cylinder.gmy resources/large_cylinder.xml
   resources/large_cylinder_rbc.xml resources/iccb_capillary_network.xml
@@ -82,8 +81,14 @@ add_to_resources(resources/four_cube.gmy resources/four_cube.xml
   resources/rbc_ico_1280.msh resources/rbc_ico_720.msh
   resources/fedosov1c.xml resources/fedosov1c.gmy
   resources/sad.msh
-  resources/velocity_inlet.txt.weights.txt
   resources/cyl_l100_r5.xml
   resources/cyl_l100_r5.gmy
   resources/rbc_ico_2880.msh
+  resources/rbc_ico_720_correct.msh
+  resources/rbc_ico_720.msh
+  resources/rbc_ico_720.vtp
+  resources/992Particles_rank3_26_t992.msh
+  resources/992Particles_rank3_26_t992.vtp
+  resources/empty_for_relative_paths.xml
 )
+endif()

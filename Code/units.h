@@ -1,20 +1,12 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UNITS_H
 #define HEMELB_UNITS_H
 
-#if HEMELB_HAVE_CSTDINT
-# include <cstdint>
-#else
-# include <stdint.h>
-#endif
+#include <cstdint>
 #include "util/Vector3D.h"
 
 namespace hemelb
@@ -53,6 +45,7 @@ namespace hemelb
 
   typedef distribn_t LatticeReciprocalTime; ///< 1/timestep
   typedef double PhysicalReciprocalTime; ///< 1/seconds
+  typedef double PhysicalRate; // inverse seconds / Hz
 
   typedef double PhysicalMass; // kilograms
 
@@ -89,6 +82,11 @@ namespace hemelb
 
   typedef double PhysicalPressureGradient;
   typedef double LatticePressureGradient;
+
+  typedef double PhysicalDynamicViscosity;
+  typedef double PhysicalKinematicViscosity;
+  typedef double LatticeDynamicViscosity;
+  typedef double LatticeKinematicViscosity;
 
   typedef double Dimensionless;
 }

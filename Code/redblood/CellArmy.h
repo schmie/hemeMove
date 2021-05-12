@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELL_ARMY_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELL_ARMY_H
+#ifndef HEMELB_REDBLOOD_CELLARMY_H
+#define HEMELB_REDBLOOD_CELLARMY_H
 
 #include <algorithm>
 #include <vector>
@@ -342,7 +338,8 @@ namespace hemelb
       auto const barycenter = cell->GetBarycenter();
 
       //! @todo: #623 AddCell should only be called if the subdomain contains the relevant RBC inlet
-      auto const iter = globalCoordsToProcMap.find(barycenter);
+      // TODO: #759 truncation of barycenter
+      auto const iter = globalCoordsToProcMap.find(LatticeVector{barycenter});
       bool insertAtThisRank = (iter != globalCoordsToProcMap.end()) && (iter->second == neighbourDependenciesGraph.Rank());
       if (insertAtThisRank)
       {

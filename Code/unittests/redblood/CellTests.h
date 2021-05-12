@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARTICLE_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARTICLE_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_CELLTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"
@@ -55,6 +51,11 @@ namespace hemelb
               }
           };
 
+	template <typename VEC3>
+	auto vector_of_zero_vec3(std::size_t count) {
+	  return std::vector<VEC3>{count, VEC3::Zero()};
+	}
+
         public:
           void setUp()
           {
@@ -73,7 +74,7 @@ namespace hemelb
           void testNullTemplateScaling()
           {
             Mesh templateMesh(original);
-            std::vector<LatticeForceVector> forces(original.vertices.size(), 0);
+	    auto forces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
 
             std::vector<Dimensionless> scales;
             scales.push_back(1.0);
@@ -104,8 +105,8 @@ namespace hemelb
             scaled.GetVertices()[1] += LatticePosition(0.0837, -0.012632, 0.0872935);
             scaled.GetVertices()[2] += LatticePosition(0.02631, -0.00824223, -0.098362);
 
-            std::vector<LatticeForceVector> uforces(original.vertices.size(), 0),
-                sforces(original.vertices.size(), 0);
+            auto uforces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
+	    auto sforces = vector_of_zero_vec3<LatticeForceVector>(original.vertices.size());
 
             scaled *= 1.1;
             auto const uenergy = GetCellWithEnergy(scaled, templateMesh, 1.1)(uforces);

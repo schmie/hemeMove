@@ -1,19 +1,16 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_MESH_H
-#define HEMELB_UNITTESTS_REDBLOOD_MESH_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_REDBLOODMESHTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_REDBLOODMESHTESTS_H
 
 #include <sstream>
 #include <cppunit/TestFixture.h>
 #include "resources/Resource.h"
 #include "redblood/Mesh.h"
+#include "redblood/MeshIO.h"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
@@ -33,7 +30,7 @@ namespace hemelb
           CPPUNIT_TEST (testBarycenter);
           CPPUNIT_TEST (testScaling);
           CPPUNIT_TEST (testTranslation);CPPUNIT_TEST_SUITE_END();
-
+	  redblood::KruegerMeshIO io = {};
         public:
           void setUp()
           {
@@ -70,7 +67,8 @@ namespace hemelb
 
           void testStandardTestMeshOrientation()
           {
-            checkMeshOrientation(*readMesh(resources::Resource("red_blood_cell.txt").Path()));
+	    //const auto io = redblood::KruegerMeshIO{};
+            checkMeshOrientation(*io.readFile(resources::Resource("red_blood_cell.txt").Path(), true));
             checkMeshOrientation(*tetrahedron(2).GetData());
             checkMeshOrientation(*icoSphere(5).GetData());
           }
@@ -148,7 +146,7 @@ namespace hemelb
           void testResourceVolume()
           {
             auto const path = resources::Resource("red_blood_cell.txt").Path();
-            CPPUNIT_ASSERT(volume(*readMesh(path)) > 0e0);
+            CPPUNIT_ASSERT(volume(*io.readFile(path, true)) > 0e0);
           }
       };
 

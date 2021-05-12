@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_MPIPARALLELINTEGRATIONTESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_MPIPARALLELINTEGRATIONTESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_MPILOCKSTEPTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_MPILOCKSTEPTESTS_H
 
 #include <cppunit/TestFixture.h>
 
@@ -17,6 +13,7 @@
 #include <memory>
 #include <iterator>
 
+#include "redblood/CellController.h"
 #include "redblood/parallel/IntegrateVelocities.h"
 #include "redblood/parallel/CellParallelization.h"
 #include "configuration/CommandLine.h"
@@ -143,7 +140,7 @@ namespace hemelb
           geometry::LatticeData const &latDat,
           std::size_t &nbtests,
           hemelb::redblood::CellContainer const &cells) {
-        std::vector<LatticePosition> positions;
+        std::vector<LatticeVector> positions;
         std::vector<LatticeForceVector> forces;
         for(site_t i(0); i < latDat.GetLocalFluidSiteCount(); ++i)
         {
@@ -160,7 +157,7 @@ namespace hemelb
         }
         if(world.Rank() == 0)
         {
-          auto const parallel_positions = world.Gather(std::vector<LatticePosition>{}, 0);
+          auto const parallel_positions = world.Gather(std::vector<LatticeVector>{}, 0);
           auto const parallel_forces = world.Gather(std::vector<LatticeForceVector>{}, 0);
           CPPUNIT_ASSERT_EQUAL(positions.size(), parallel_positions.size());
           for(std::size_t i(0); i < positions.size(); ++i)

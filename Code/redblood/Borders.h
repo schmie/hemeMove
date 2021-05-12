@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_REDBLOOD_BORDERS_INTERACTION_H
-#define HEMELB_REDBLOOD_BORDERS_INTERACTION_H
+#ifndef HEMELB_REDBLOOD_BORDERS_H
+#define HEMELB_REDBLOOD_BORDERS_H
 
 #include <cassert>
 #include "redblood/DivideConquer.h"
@@ -86,26 +82,27 @@ namespace hemelb
         bool wannaSee(value_type const &current) const;
     };
 
-    template<class T> util::Vector3D<T> direction(Borders border)
+    template<class T>
+    util::Vector3D<T> direction(Borders border)
     {
       switch (border)
       {
         case Borders::TOP:
-          return util::Vector3D<T>(1, 0, 0);
+          return {1, 0, 0};
         case Borders::BOTTOM:
-          return util::Vector3D<T>(-1, 0, 0);
+          return {-1, 0, 0};
         case Borders::NORTH:
-          return util::Vector3D<T>(0, 1, 0);
+          return {0, 1, 0};
         case Borders::SOUTH:
-          return util::Vector3D<T>(0, -1, 0);
+          return {0, -1, 0};
         case Borders::WEST:
-          return util::Vector3D<T>(0, 0, -1);
+          return {0, 0, -1};
         case Borders::EAST:
-          return util::Vector3D<T>(0, 0, 1);
+          return {0, 0, 1};
         default:
-          return util::Vector3D<T>(0, 0, 0);
+          return {0, 0, 0};
       };
-      return LatticeVector(0, 0, 0);
+      return {0, 0, 0};
     }
     template<class T> util::Vector3D<T> direction(size_t border)
     {

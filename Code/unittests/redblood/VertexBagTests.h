@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_VERTEXBAG_H
-#define HEMELB_UNITTESTS_REDBLOOD_VERTEXBAG_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_VERTEXBAGTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_VERTEXBAGTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/VertexBag.h"
@@ -118,7 +114,7 @@ namespace hemelb
                                  splits[0]->GetVertices().size() + splits[2]->GetVertices().size());
           }
 
-          static proc_t proc_at_pos(LatticePosition const &position)
+          static proc_t proc_at_pos(LatticeVector const &position)
           {
             return (position.x > 0 ?
               0 :

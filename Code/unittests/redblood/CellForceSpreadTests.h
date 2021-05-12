@@ -1,18 +1,13 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELL_FORCE_SPREAD_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELL_FORCE_SPREAD_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLFORCESPREADTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_CELLFORCESPREADTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/GridAndCell.h"
-#include "redblood/Facet.impl.cc"
 #include "unittests/redblood/Fixtures.h"
 
 namespace hemelb
@@ -80,7 +75,8 @@ namespace hemelb
                                                                                             {}),
                                                                   details::SpreadForces(forces,
                                                                                         *latDat));
-        return latDat->GetSite(center).GetForce();
+	// TODO #759: is this truncation OK?
+        return latDat->GetSite(LatticeVector{center}).GetForce();
       }
 
       void CellForceSpreadTests::setUp()

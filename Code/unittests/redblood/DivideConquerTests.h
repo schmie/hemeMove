@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_DIVIDE_AND_CONQUER_H
-#define HEMELB_UNITTESTS_REDBLOOD_DIVIDE_AND_CONQUER_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_DIVIDECONQUERTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_DIVIDECONQUERTESTS_H
 
 #include <iterator>
 #include <cppunit/TestFixture.h>
@@ -63,7 +59,7 @@ namespace hemelb
                                             LatticeVector(1, -2, 2) };
 
         for (size_t i(0); i < N; ++i)
-          CPPUNIT_ASSERT(helpers::is_zero(dnc.DowngradeKey(inputs[i]) - expected[i]));
+          CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), dnc.DowngradeKey(inputs[i]) - expected[i]);
       }
 
       void DivideAndConquerTests::testNoDowngradeKey()
@@ -163,4 +159,4 @@ namespace hemelb
   }
 }
 
-#endif  // ONCE
+#endif // ONCE

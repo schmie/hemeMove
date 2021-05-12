@@ -1,16 +1,17 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <fstream>
 #include <cassert>
 #include <numeric>
 #include <map>
+
+#include <vtkCellData.h>
+#include <vtkPolyData.h>
+#include <vtkPolyDataNormals.h>
+#include <vtkSmartPointer.h>
 
 #include "redblood/Mesh.h"
 #include "util/fileutils.h"
@@ -22,237 +23,10 @@ namespace hemelb
 {
   namespace redblood
   {
-    std::shared_ptr<MeshData> readMesh(std::string const &filename)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-                                                   filename.c_str());
-
-      // Open file if it exists
-      std::ifstream file;
-
-      if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
-
-      file.open(filename.c_str());
-      return readMesh(file);
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::string const &filename, util::UnitConverter const &units)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from %s",
-          filename.c_str());
-
-      // Open file if it exists
-      std::ifstream file;
-
-      if (!util::file_exists(filename.c_str()))
-        throw Exception() << "Red-blood-cell mesh file '" << filename.c_str() << "' does not exist";
-
-      file.open(filename.c_str());
-      return readMesh(file, units);
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::istream &stream, util::UnitConverter const &units)
-    {
-      auto result = readMesh(stream);
-      for(auto &vertex: result->vertices)
-      {
-        vertex = units.ConvertPositionToLatticeUnits(vertex);
-      }
-      return result;
-    }
-
-    std::shared_ptr<MeshData> readMesh(std::istream &stream)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Reading red blood cell from stream");
-
-      std::string line;
-
-      // Drop header
-      for (int i(0); i < 4; ++i)
-      {
-        std::getline(stream, line);
-      }
-
-      // Number of vertices
-      unsigned int num_vertices;
-      stream >> num_vertices;
-
-      // Create Mesh data
-      std::shared_ptr<MeshData> result(new MeshData);
-      result->vertices.resize(num_vertices);
-
-      // Then read in first and subsequent lines
-      MeshData::Facet::value_type offset;
-      stream >> offset >> result->vertices[0].x >> result->vertices[0].y >> result->vertices[0].z;
-      log::Logger::Log<log::Trace, log::Singleton>("Vertex 0 at %d, %d, %d",
-                                                   result->vertices[0].x,
-                                                   result->vertices[0].y,
-                                                   result->vertices[0].z);
-
-      for (unsigned int i(1), index(0); i < num_vertices; ++i)
-      {
-        stream >> index >> result->vertices[i].x >> result->vertices[i].y >> result->vertices[i].z;
-        // No gaps in vertex index list
-        assert(index == (i + offset));
-        log::Logger::Log<log::Trace, log::Singleton>("Vertex %i at %d, %d, %d",
-                                                     i,
-                                                     result->vertices[i].x,
-                                                     result->vertices[i].y,
-                                                     result->vertices[i].z);
-      }
-
-      // Drop mid-file headers
-      for (int i(0); i < 3; ++i)
-      {
-        std::getline(stream, line);
-      }
-
-      // Read facet indices
-      unsigned int num_facets;
-      MeshData::Facet indices;
-      stream >> num_facets;
-      result->facets.resize(num_facets);
-
-      for (unsigned int i(0), dummy(0); i < num_facets; ++i)
-      {
-        stream >> dummy >> dummy >> dummy >> dummy >> dummy >> dummy >> indices[0] >> indices[1]
-            >> indices[2];
-        result->facets[i][0] = indices[0] - offset;
-        result->facets[i][1] = indices[1] - offset;
-        result->facets[i][2] = indices[2] - offset;
-        log::Logger::Log<log::Trace, log::Singleton>("Facet %i with %i, %i, %i",
-                                                     i,
-                                                     indices[0] - offset,
-                                                     indices[1] - offset,
-                                                     indices[2] - offset);
-      }
-
-      log::Logger::Log<log::Debug, log::Singleton>("Read %i vertices and %i triangular facets",
-                                                   num_vertices,
-                                                   num_facets);
-
-      orientFacets(*result);
-      return result;
-    }
-
-    void writeMesh(std::string const &filename, MeshData const &data, util::UnitConverter const& c)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-                                                   filename.c_str());
-      std::ofstream file(filename.c_str());
-      assert(file.is_open());
-      writeMesh(file, data, c);
-    }
-
-    void writeVTKMesh(std::string const &filename, MeshData const &data,
-                      util::UnitConverter const& converter)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-                                                   filename.c_str());
-      std::ofstream file(filename.c_str());
-      assert(file.is_open());
-      writeVTKMesh(file, data, converter);
-    }
-
-    void writeMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const& converter)
-    {
-      writeMesh(stream, data.vertices, data.facets, converter);
-    }
-
-    void writeMesh(std::ostream &stream, MeshData::Vertices const &vertices,
-                   MeshData::Facets const & facets, util::UnitConverter const& converter)
-    {
-      // Write Header
-      stream << "$MeshFormat\n2 0 8\n$EndMeshFormat\n" << "$Nodes\n" << vertices.size()
-          << "\n";
-
-      typedef MeshData::Vertices::const_iterator VertexIterator;
-      VertexIterator i_vertex = vertices.begin();
-      VertexIterator const i_vertex_end = vertices.end();
-
-      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-      {
-        auto const vertex = converter.ConvertPositionToPhysicalUnits(*i_vertex);
-        stream << i << " " << vertex[0] << " " << vertex[1] << " " << vertex[2] << "\n";
-      }
-
-      stream << "$EndNode\n" << "$Elements\n" << facets.size() << "\n";
-
-      typedef MeshData::Facets::const_iterator FacetIterator;
-      FacetIterator i_facet = facets.begin();
-      FacetIterator const i_facet_end = facets.end();
-
-      for (unsigned i(1); i_facet != i_facet_end; ++i_facet, ++i)
-        stream << i << " 1 2 3 4 5 " << (*i_facet)[0] + 1 << " " << (*i_facet)[1] + 1 << " "
-            << (*i_facet)[2] + 1 << "\n";
-
-      stream << "$EndElement\n";
-    }
-
-    void writeVTKMesh(std::ostream &stream, MeshData const &data, util::UnitConverter const &conv)
-    {
-      writeVTKMesh(stream, data.vertices, data.facets, conv);
-    }
-    void writeVTKMesh(std::ostream &stream, MeshData::Vertices const &vertices,
-                      MeshData::Facets const &facets, util::UnitConverter const & converter,
-                      PointScalarData pointScalarData)
-    {
-      // Write Header
-      stream << "<?xml version=\"1.0\"?>\n"
-          << "<VTKFile type=\"PolyData\" version=\"0.1\" byte_order=\"LittleEndian\">\n"
-          << "  <PolyData>\n" << "    <Piece NumberOfPoints=\"" << vertices.size()
-          << "\" NumberOfPolys=\"" << facets.size() << "\">\n" << "      <Points>\n"
-          << "        <DataArray NumberOfComponents=\"3\" type=\"Float32\">\n";
-
-      typedef MeshData::Vertices::const_iterator VertexIterator;
-      VertexIterator i_vertex = vertices.begin();
-      VertexIterator const i_vertex_end = vertices.end();
-
-      for (unsigned i(1); i_vertex != i_vertex_end; ++i_vertex, ++i)
-      {
-        auto const vertex = converter.ConvertPositionToPhysicalUnits(*i_vertex);
-        stream << vertex[0] << " " << vertex[1] << " " << vertex[2] << " ";
-      }
-
-      stream << "\n        </DataArray>\n" << "      </Points>\n";
-
-      if (pointScalarData.size() > 0)
-      {
-        stream << "      <PointData Scalar=\"scalar_fields\">\n";
-
-        for (auto field : pointScalarData)
-        {
-          stream << "        <DataArray type=\"Float32\" Name=\"" << field.first << "\">\n";
-          stream << "        ";
-          typedef PointScalarData::value_type::second_type::value_type ScalarFieldType;
-          std::ostream_iterator<ScalarFieldType> stream_iterator(stream, " ");
-          std::copy(field.second.begin(), field.second.end(), stream_iterator);
-          stream << "\n        </DataArray>\n";
-        }
-        stream << "      </PointData>\n";
-      }
-
-      stream << "      <Polys>\n" << "        <DataArray type=\"Int32\" Name=\"connectivity\">\n";
-
-      typedef MeshData::Facets::const_iterator FacetIterator;
-      FacetIterator i_facet = facets.begin();
-      FacetIterator const i_facet_end = facets.end();
-
-      for (; i_facet != i_facet_end; ++i_facet)
-        stream << (*i_facet)[0] << " " << (*i_facet)[1] << " " << (*i_facet)[2] << " ";
-
-      stream << "\n        </DataArray>\n"
-          << "        <DataArray type=\"Int32\" Name=\"offsets\">\n";
-
-      for (unsigned i(0); i < facets.size(); ++i)
-      {
-        stream << (i + 1) * 3 << " ";
-      }
-
-      stream << "\n        </DataArray>\n" << "      </Polys>\n";
-      stream << "    </Piece>\n  </PolyData>\n</VTKFile>\n";
-    }
+    // Check that the condition in Mesh.h is true.
+    // TODO: fix as described in header
+    static_assert(std::is_same<IdType, vtkIdType>::value,
+		  "hemelb::redblood::IdType must be the same as vtkIdType");
 
     LatticePosition barycenter(MeshData::Vertices const &vertices)
     {
@@ -677,6 +451,8 @@ namespace hemelb
     }
     void orientFacets(MeshData &mesh, bool outward)
     {
+      log::Logger::Log<log::Warning, log::Singleton>("orientFacets method for meshes constructed from a .msh file has been deprecated. Consider using VTK input files instead.");
+
       // create a new mesh at slighly smaller scale
       MeshData smaller(mesh);
       auto const scale = 0.99;
@@ -705,5 +481,43 @@ namespace hemelb
         }
       }
     }
+    unsigned orientFacets(MeshData &mesh, vtkPolyData &polydata, bool outward)
+    {
+      vtkSmartPointer<vtkPolyDataNormals> normalCalculator = vtkSmartPointer<vtkPolyDataNormals>::New();
+      normalCalculator->SetInputData(&polydata);
+      normalCalculator->ComputePointNormalsOff();
+      normalCalculator->ComputeCellNormalsOn();
+      normalCalculator->SetAutoOrientNormals(1);
+      normalCalculator->Update();
+      auto normals = normalCalculator->GetOutput()->GetCellData()->GetNormals();
+
+      assert(normals->GetNumberOfComponents() == 3);
+      assert(normals->GetNumberOfTuples() == mesh.facets.size());
+
+      // Loop over each facet, checks orientation and modify as appropriate
+      unsigned normalId = 0;
+      unsigned numSwapped = 0;
+      for (auto &facet : mesh.facets)
+      {
+        auto const &v0 = mesh.vertices[facet[0]];
+        auto const &v1 = mesh.vertices[facet[1]];
+        auto const &v2 = mesh.vertices[facet[2]];
+
+        double vtkNormal[3];
+        normals->GetTuple(normalId, vtkNormal);
+        LatticePosition direction(vtkNormal[0], vtkNormal[1], vtkNormal[2]);
+
+        if ( ( (v0 - v1).Cross(v2 - v1).Dot(direction) > 0e0) xor outward)
+        {
+          std::swap(facet[0], facet[2]);
+          ++numSwapped;
+        }
+
+        ++normalId;
+      }
+
+      return numSwapped;
+    }
+
   }
 } // hemelb::redblood

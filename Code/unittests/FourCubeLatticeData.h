@@ -1,11 +1,7 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
 #define HEMELB_UNITTESTS_FOURCUBELATTICEDATA_H
@@ -112,24 +108,25 @@ namespace hemelb
 
                   float randomDistance = (float(std::rand() % 10000) / 10000.0);
 
+		  using CutType = io::formats::geometry::CutType;
                   // The inlet is by the minimal z value.
                   if (neighK < minInd)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::GeometrySiteLink::INLET_INTERSECTION;
+                    link.type = CutType::INLET;
                     link.distanceToIntersection = randomDistance;
                   }
                   // The outlet is by the maximal z value.
                   else if (neighK > maxInd)
                   {
                     link.ioletId = 0;
-                    link.type = geometry::GeometrySiteLink::OUTLET_INTERSECTION;
+                    link.type = CutType::OUTLET;
                     link.distanceToIntersection = randomDistance;
                   }
                   // Walls are by extremes of x and y.
                   else if (neighI < minInd || neighJ < minInd || neighI > maxInd || neighJ > maxInd)
                   {
-                    link.type = geometry::GeometrySiteLink::WALL_INTERSECTION;
+                    link.type = CutType::WALL;
                     link.distanceToIntersection = randomDistance;
                   }
 

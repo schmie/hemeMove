@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_TOPOLOGY_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_TOPOLOGY_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_TOPOLOGYTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_TOPOLOGYTESTS_H
 
 #include <sstream>
 #include <cppunit/TestFixture.h>
@@ -33,7 +29,7 @@ namespace hemelb
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cube.txt").Path();
-            mesh = readMesh(filename);
+            mesh = redblood::KruegerMeshIO{}.readFile(filename, true);
             // Checks the mesh input makes sense
             CPPUNIT_ASSERT(mesh->vertices.size() == 8);
             CPPUNIT_ASSERT(mesh->facets.size() == 12);
@@ -80,7 +76,7 @@ namespace hemelb
             CPPUNIT_ASSERT(topo->facetNeighbors.size() == 12);
 
             // expected[facet] = {neighbor indices}
-            size_t expected[12][3] = { { 1, 3, 9 }, { 0, 6, 10 }, { 3, 5, 8 }, { 0, 2, 10 }, { 5,
+	    redblood::IdType expected[12][3] = { { 1, 3, 9 }, { 0, 6, 10 }, { 3, 5, 8 }, { 0, 2, 10 }, { 5,
                                                                                                7,
                                                                                                8 },
                                        { 4, 2, 11 }, { 1, 7, 9 }, { 6, 4, 11 }, { 9, 4, 2 }, { 0,
@@ -90,7 +86,7 @@ namespace hemelb
 
             for (unsigned facet(0); facet < 12; ++facet)
             {
-              std::array<size_t, 3> const &neighs = topo->facetNeighbors[facet];
+	      auto const& neighs = topo->facetNeighbors[facet];
               CPPUNIT_ASSERT(neighs.size() == 3);
 
               for (size_t neigh(0); neigh < 3; ++neigh)

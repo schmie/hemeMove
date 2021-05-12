@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURE_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURE_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_PARALLELFIXTURETESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_PARALLELFIXTURETESTS_H
 
 #include <cppunit/TestFixture.h>
 
@@ -122,7 +118,7 @@ namespace hemelb
         for(std::size_t i(0); i < positions.size(); ++i)
         {
           auto const procs = hemelb::redblood::parallel::details::positionAffectsProcs<Stencil>(
-              globalCoordsToProcMap, positions[i]);
+												globalCoordsToProcMap, positions[i].as<LatticeDistance>());
 
           // Send set of affected procs as known by owner proc
           decltype(world.Rank()) positions_are_from_this_proc = i / (nmid + nedges) + 1;

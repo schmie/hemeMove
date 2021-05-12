@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #include <string>
 #include <iostream>
@@ -17,14 +13,30 @@
 #include "reporting/BuildInfo.h"
 #include "log/Logger.h"
 #include "util/fileutils.h"
+#include "lb/InitialCondition.h"
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
-#include "redblood/Cell.h"
+#include "redblood/RBCConfig.h"
 
 namespace hemelb
 {
   namespace configuration
   {
+    // Base IC
+    ICConfigBase::ICConfigBase(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t) : unitConverter(units), t0(t) {
+    }
+
+    // Uniform equilibrium IC
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p) : ICConfigBase(units, t), p_mmHg(p), v_ms(0.0) {
+    }
+
+    EquilibriumIC::EquilibriumIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, PhysicalPressure p, const PhysicalVelocity& v) : ICConfigBase(units, t), p_mmHg(p), v_ms(v) {
+    }
+
+    // checkpoint IC
+    CheckpointIC::CheckpointIC(const util::UnitConverter* units, boost::optional<LatticeTimeStep> t, const std::string& cp) : ICConfigBase(units, t), cpFile(cp) {
+    }
+
+
     SimConfig* SimConfig::New(const std::string& path)
     {
       SimConfig* ans = new SimConfig(path);
@@ -32,11 +44,13 @@ namespace hemelb
       return ans;
     }
 
+
     SimConfig::SimConfig(const std::string& path) :
         xmlFilePath(path), rawXmlDoc(nullptr), hasColloidSection(false), warmUpSteps(0),
             unitConverter(nullptr)
     {
     }
+
     void SimConfig::Init()
     {
       if (!util::file_exists(xmlFilePath.c_str()))
@@ -46,7 +60,6 @@ namespace hemelb
       rawXmlDoc = new io::xml::Document(xmlFilePath);
       colloidConfigPath = xmlFilePath;
       DoIO(rawXmlDoc->GetRoot());
-      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, xmlFilePath);
     }
 
     SimConfig::~SimConfig()
@@ -61,19 +74,27 @@ namespace hemelb
 
       delete unitConverter;
       unitConverter = nullptr;
+
+      delete rbcConf;
+      rbcConf = nullptr;
+    }
+
+    // Turn an input XML-relative path into a full path
+    std::string SimConfig::RelPathToFullPath(const std::string& path) const {
+      return util::NormalizePathRelativeToPath(path, xmlFilePath);
     }
 
     void SimConfig::DoIO(io::xml::Element topNode)
     {
       // Top element must be:
-      // <hemelbsettings version="2" />
+      // <hemelbsettings version="4" />
       if (topNode.GetName() != "hemelbsettings")
         throw Exception() << "Invalid root element: " << topNode.GetPath();
 
       unsigned version;
       const std::string& versionStr = topNode.GetAttributeOrThrow("version", version);
-      if (version != 3U)
-        throw Exception() << "Unrecognised XML version. Expected 3, got " << versionStr;
+      if (version != 4U)
+        throw Exception() << "Unrecognised XML version. Expected 4, got " << versionStr;
 
       DoIOForSimulation(topNode.GetChildOrThrow("simulation"));
       CreateUnitConverter();
@@ -104,7 +125,15 @@ namespace hemelb
 
       // The RBC section must be parsed *after* the inlets and outlets have been
       // defined
-      hasRBCSection = DoIOForRedBloodCells(topNode);
+      auto rbcEl = topNode.GetChildOrNull("redbloodcells");
+      if (rbcEl != io::xml::Element::Missing()) {
+#ifdef HEMELB_BUILD_RBC
+	rbcConf = new redblood::RBCConfig;
+	rbcConf->DoIOForRedBloodCells(topNode, *this, *unitConverter);
+#else
+	throw Exception() << "Input XML has redbloodcells section but HEMELB_BUILD_RBC=OFF";
+#endif
+      }
     }
 
     void SimConfig::DoIOForSimulation(const io::xml::Element simEl)
@@ -156,6 +185,33 @@ namespace hemelb
       // <origin value="(x,y,z)" units="m" />
       const io::xml::Element originEl = simEl.GetChildOrThrow("origin");
       GetDimensionalValue(originEl, "m", geometryOriginMetres);
+
+      // Optional element
+      // <fluid_density value="float" units="kg/m3" />
+      auto maybeDensityEl = simEl.GetChildOrNull("fluid_density");
+      if (maybeDensityEl) {
+	GetDimensionalValue(maybeDensityEl, "kg/m3", fluidDensityKgm3);
+      } else {
+	fluidDensityKgm3 = DEFAULT_FLUID_DENSITY_Kg_per_m3;
+      }
+
+      // Optional element
+      // <fluid_viscosity value="float" units="Pa.s" />
+      auto maybeViscosityEl = simEl.GetChildOrNull("fluid_viscosity");
+      if (maybeViscosityEl) {
+	GetDimensionalValue(maybeViscosityEl, "Pa.s", fluidViscosityPas);
+      } else {
+	fluidViscosityPas = DEFAULT_FLUID_VISCOSITY_Pas;
+      }
+
+      // Optional element (default = 0)
+      // <reference_pressure value="float" units="mmHg" />
+      auto maybeRefPresEl = simEl.GetChildOrNull("reference_pressure");
+      if (maybeRefPresEl) {
+	GetDimensionalValue(maybeRefPresEl, "mmHg", reference_pressure_mmHg);
+      } else {
+	reference_pressure_mmHg = 0;
+      }
     }
 
     void SimConfig::DoIOForGeometry(const io::xml::Element geometryEl)
@@ -164,17 +220,16 @@ namespace hemelb
       // <geometry>
       //  <datafile path="relative path to GMY" />
       // </geometry>
-      dataFilePath = geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path");
-      // Convert to a full path
-      dataFilePath = util::NormalizePathRelativeToPath(dataFilePath, xmlFilePath);
-
+      dataFilePath = RelPathToFullPath(geometryEl.GetChildOrThrow("datafile").GetAttributeOrThrow("path"));
     }
 
     void SimConfig::CreateUnitConverter()
     {
       unitConverter = new util::UnitConverter(timeStepSeconds,
                                               voxelSizeMetres,
-                                              geometryOriginMetres);
+                                              geometryOriginMetres,
+					      fluidDensityKgm3,
+					      reference_pressure_mmHg);
     }
 
     /**
@@ -240,38 +295,6 @@ namespace hemelb
         ioletList.push_back(newIolet);
       }
       return ioletList;
-    }
-
-    bool SimConfig::DoIOForRedBloodCells(const io::xml::Element & topNode)
-    {
-      auto const rbcNode = topNode.GetChildOrNull("redbloodcells");
-      if (rbcNode == rbcNode.Missing())
-      {
-        return false;
-      }
-      const io::xml::Element controllerNode = rbcNode.GetChildOrThrow("controller");
-      GetDimensionalValue(controllerNode.GetChildOrThrow("boxsize"), "LB", boxSize);
-
-      rbcMeshes.reset(redblood::readTemplateCells(topNode, GetUnitConverter()).release());
-      rbcinserter = redblood::readRBCInserters(topNode, GetUnitConverter(), *rbcMeshes);
-      rbcOutlets = redblood::readRBCOutlets(topNode, GetUnitConverter());
-      cell2Cell = redblood::readNode2NodeForce(
-          rbcNode.GetChildOrNull("cell2Cell"), GetUnitConverter());
-      cell2Wall = redblood::readNode2NodeForce(
-          rbcNode.GetChildOrNull("cell2Wall"), GetUnitConverter());
-      if(boxSize < cell2Wall.cutoff)
-      {
-        throw Exception() << "Box-size < cell-wall interaction size: "
-          "cell-wall interactions cannot be all accounted for.";
-      }
-      if(boxSize < cell2Cell.cutoff)
-      {
-        throw Exception() << "Box-size < cell-cell interaction size: "
-          "cell-cell interactions cannot be all accounted for.";
-      }
-      const io::xml::Element outputNode = rbcNode.GetChildOrThrow("output");
-      GetDimensionalValue(outputNode.GetChildOrThrow("period"), "LB", rbcOutputPeriod);
-      return true;
     }
 
     void SimConfig::DoIOForFlowExtension(lb::iolets::InOutLet * iolet,
@@ -379,23 +402,23 @@ namespace hemelb
 
       if (type == "plane")
       {
-        file->geometry = DoIOForPlaneGeometry(geometryEl);
+        file->geometry.reset(DoIOForPlaneGeometry(geometryEl));
       }
       else if (type == "line")
       {
-        file->geometry = DoIOForLineGeometry(geometryEl);
+        file->geometry.reset(DoIOForLineGeometry(geometryEl));
       }
       else if (type == "whole")
       {
-        file->geometry = new extraction::WholeGeometrySelector();
+        file->geometry.reset(new extraction::WholeGeometrySelector());
       }
       else if (type == "surface")
       {
-        file->geometry = new extraction::GeometrySurfaceSelector();
+        file->geometry.reset(new extraction::GeometrySurfaceSelector());
       }
       else if (type == "surfacepoint")
       {
-        file->geometry = DoIOForSurfacePoint(geometryEl);
+        file->geometry.reset(DoIOForSurfacePoint(geometryEl));
       }
       else
       {
@@ -422,7 +445,7 @@ namespace hemelb
       GetDimensionalValue(point1El, "m", point1);
       GetDimensionalValue(point2El, "m", point2);
 
-      return new extraction::StraightLineGeometrySelector(point1, point2);
+      return new extraction::StraightLineGeometrySelector(point1.as<float>(), point2.as<float>());
     }
 
     extraction::PlaneGeometrySelector* SimConfig::DoIOForPlaneGeometry(
@@ -441,13 +464,13 @@ namespace hemelb
 
       if (radiusEl == io::xml::Element::Missing())
       {
-        return new extraction::PlaneGeometrySelector(point, normal);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal);
       }
       else
       {
         PhysicalDistance radius;
         GetDimensionalValue(radiusEl, "m", radius);
-        return new extraction::PlaneGeometrySelector(point, normal, radius);
+        return new extraction::PlaneGeometrySelector(point.as<float>(), normal, radius);
       }
 
     }
@@ -459,7 +482,7 @@ namespace hemelb
 
       PhysicalPosition point;
       GetDimensionalValue(pointEl, "m", point);
-      return new extraction::SurfacePointSelector(point);
+      return new extraction::SurfacePointSelector(point.as<float>());
     }
 
     extraction::OutputField SimConfig::DoIOForPropertyField(const io::xml::Element& fieldEl)
@@ -478,10 +501,15 @@ namespace hemelb
         field.name = *name;
       }
 
+      // Default offset is zero
+      field.offset = 0.0;
+
       // Check and assign the type.
       if (type == "pressure")
       {
         field.type = extraction::OutputField::Pressure;
+	// Pressure uses the reference pressure
+	field.offset = reference_pressure_mmHg;
       }
       else if (type == "velocity")
       {
@@ -511,6 +539,10 @@ namespace hemelb
       {
         field.type = extraction::OutputField::TangentialProjectionTraction;
       }
+      else if (type == "distributions")
+      {
+        field.type = extraction::OutputField::Distributions;
+      }
       else if (type == "mpirank")
       {
         field.type = extraction::OutputField::MpiRank;
@@ -539,11 +571,40 @@ namespace hemelb
 
     void SimConfig::DoIOForInitialConditions(io::xml::Element initialconditionsEl)
     {
-      //, isLoading, initialPressure
-      io::xml::Element pressureEl = initialconditionsEl.GetChildOrThrow("pressure");
-      io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+      // The <time> element may be present - if so, it will set the
+      // initial timestep value
+      boost::optional<LatticeTimeStep> t0;
+      if (auto timeEl = initialconditionsEl.GetChildOrNull("time")) {
+	LatticeTimeStep tmp;
+	GetDimensionalValue(timeEl, "lattice", tmp);
+	t0 = tmp;
+      }
 
-      GetDimensionalValue(uniformEl, "mmHg", initialPressure_mmHg);
+      // Exactly one of {<pressure>, <checkpoint>} must be present
+      // TODO: use something other than an if-tree
+      auto pressureEl = initialconditionsEl.GetChildOrNull("pressure");
+      auto checkpointEl = initialconditionsEl.GetChildOrNull("checkpoint");
+      if (pressureEl) {
+	if (checkpointEl) {
+	  // Both are present - this is an error
+	  throw Exception()
+	    << "XML contains both <pressure> and <checkpoint> sub elements of <initialconditions>";
+	} else {
+	  // Only pressure
+	  io::xml::Element uniformEl = pressureEl.GetChildOrThrow("uniform");
+	  PhysicalPressure p0_mmHg;
+	  GetDimensionalValue(uniformEl, "mmHg", p0_mmHg);
+	  icConfig = EquilibriumIC(unitConverter, t0, p0_mmHg);
+	}
+      } else {
+	if (checkpointEl) {
+	  // Only checkpoint
+	  icConfig = CheckpointIC(unitConverter, t0, checkpointEl.GetAttributeOrThrow("file"));
+	} else {
+	  // No IC!
+	  throw Exception() << "XML <initialconditions> element contains no known initial condition type";
+	}
+      }
     }
 
     lb::iolets::InOutLetCosine* SimConfig::DoIOForCosinePressureInOutlet(
@@ -663,9 +724,7 @@ namespace hemelb
 
       const io::xml::Element conditionEl = ioletEl.GetChildOrThrow("condition");
 
-      std::string velocityFilePath = conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value");
-
-      velocityFilePath = util::NormalizePathRelativeToPath(velocityFilePath, xmlFilePath);
+      std::string velocityFilePath = RelPathToFullPath(conditionEl.GetChildOrThrow("path").GetAttributeOrThrow("value"));
       newIolet->SetFilePath(velocityFilePath);
 
       const io::xml::Element radiusEl = conditionEl.GetChildOrThrow("radius");
@@ -677,11 +736,6 @@ namespace hemelb
     bool SimConfig::HasColloidSection() const
     {
       return hasColloidSection;
-    }
-
-    PhysicalPressure SimConfig::GetInitialPressure() const
-    {
-      return initialPressure_mmHg;
     }
 
     const util::UnitConverter& SimConfig::GetUnitConverter() const
@@ -738,7 +792,7 @@ namespace hemelb
           > (criterionEl, "m/s");
     }
 
-    const SimConfig::MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
+    const MonitoringConfig* SimConfig::GetMonitoringConfiguration() const
     {
       return &monitoringConfig;
     }

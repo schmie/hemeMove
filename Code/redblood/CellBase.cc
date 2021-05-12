@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include <fstream>
 #include <numeric>
 #include "redblood/CellBase.h"
@@ -161,22 +157,6 @@ namespace hemelb
       }
 
       return std::accumulate(edgeLengths.begin(), edgeLengths.end(), 0.0) / edgeLengths.size();
-    }
-
-    void writeVTKMesh(std::string const &filename, std::shared_ptr<CellBase const> cell,
-                      util::UnitConverter const &converter)
-    {
-      log::Logger::Log<log::Debug, log::Singleton>("Writing red blood cell to %s",
-                                                   filename.c_str());
-      std::ofstream file(filename.c_str());
-      assert(file.is_open());
-      writeVTKMesh(file, cell, converter);
-    }
-
-    void writeVTKMesh(std::ostream &stream, std::shared_ptr<CellBase const> cell,
-                      util::UnitConverter const &converter)
-    {
-      writeVTKMesh(stream, cell->GetVertices(), cell->GetTemplateMesh().GetFacets(), converter);
     }
 
 #   ifndef NDEBUG

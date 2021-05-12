@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_DATAIO_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_DATAIO_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_REDBLOODMESHDATAIOTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_REDBLOODMESHDATAIOTESTS_H
 
 #include <sstream>
 #include <cppunit/TestFixture.h>
@@ -32,12 +28,13 @@ namespace hemelb
           CPPUNIT_TEST_SUITE (RedBloodMeshDataIOTests);
           CPPUNIT_TEST (testReadMesh);
           CPPUNIT_TEST (testWriteMesh);CPPUNIT_TEST_SUITE_END();
+	  redblood::KruegerMeshIO io = {};
 
         public:
           void setUp()
           {
             std::string filename = resources::Resource("red_blood_cell.txt").Path();
-            mesh = readMesh(filename);
+            mesh = io.readFile(filename, true);
           }
 
           void tearDown()
@@ -66,10 +63,8 @@ namespace hemelb
 
           void testWriteMesh()
           {
-            std::ostringstream output;
-            writeMesh(output, *mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0)));
-            std::istringstream input(output.str());
-            std::shared_ptr<MeshData> other = readMesh(input);
+            auto output = io.writeString(*mesh, util::UnitConverter(1, 1, LatticePosition(0, 0, 0), 1000.0, 0.0));
+            std::shared_ptr<MeshData> other = io.readString(output, true);
             CPPUNIT_ASSERT(other->vertices.size() == mesh->vertices.size());
             CPPUNIT_ASSERT(other->facets.size() == mesh->facets.size());
             CPPUNIT_ASSERT(compare(mesh->vertices.front() - other->vertices.front()));
@@ -86,7 +81,7 @@ namespace hemelb
           {
             return in.GetMagnitudeSquared() < 1e-8;
           }
-          static bool any(std::array<size_t, 3> const &vec, size_t value)
+          static bool any(MeshData::Facet const &vec, size_t value)
           {
             return vec[0] == value or vec[1] == value or vec[2] == value;
           }

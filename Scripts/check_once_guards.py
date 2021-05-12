@@ -1,12 +1,8 @@
 #!/usr/bin/env python
-# 
-# Copyright (C) University College London, 2007-2012, all rights reserved.
-# 
-# This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-# with, install, use, duplicate, modify, redistribute or share this
-# file, or any part thereof, other than as allowed by any agreement
-# specifically made by you with University College London.
-# 
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
 
 import os
 import re
@@ -33,11 +29,11 @@ def IncludedFileGenerator(filename, includeFinder):
     numbers and paths included by include statements in the
     file.
     """    
-    codefile = file(filename)
-    for iLine, line in enumerate(codefile):
-        match = includeFinder.match(line)
-        if match:
-            yield (iLine + 1), match.group(1)
+    with open(filename) as codefile:
+        for iLine, line in enumerate(codefile):
+            match = includeFinder.match(line)
+            if match:
+                yield (iLine + 1), match.group(1)
 
 FileNonSystemIncludedFileGenerator = lambda filename: IncludedFileGenerator(filename, nonSystemIncludeFinder)
 FileSystemIncludedFileGenerator = lambda filename: IncludedFileGenerator(filename, systemIncludeFinder)
@@ -60,7 +56,7 @@ def CheckIncludePaths(sourceFile):
         if include in ignoredIncludes:
             continue
         
-        if not os.path.exists(include) and not os.path.exists(include + '.in'):
+        if not os.path.exists(include) and not os.path.exists(include + '.in') and not os.path.exists(os.path.splitext(include)[0] + ".in.h"):
             sys.stderr.write(
                 '{file}:{line} Bad include path "{dodgy}"\n'.format(file=sourceFile,
                                                                     line=lineNumber,
@@ -109,13 +105,13 @@ def ignoreCopyright(f):
   return line
 
 def GetGuardLines(filename):
-    f = file(filename)
-    lines=[ignoreCopyright(f)]
-    lines.append(f.readline())
+    with open(filename) as f:
+        lines=[ignoreCopyright(f)]
+        lines.append(f.readline())
     
-    for line in f:
-        continue
-    lines.append(line)
+        for line in f:
+            continue
+        lines.append(line)
     return lines
 
 def SplitAll(path):
@@ -162,9 +158,10 @@ if __name__ == '__main__':
 
     ignoredIncludes = set((
         'MPWide.h',
-	'tinyxml.h',
+        'tinyxml.h',
         'parmetis.h',
         'ctemplate/template.h',
+        'unittests/@HEMELB_UNITTEST_INCLUDE@'
         ))
 
     errors = False

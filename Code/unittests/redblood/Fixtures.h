@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
 #define HEMELB_UNITTESTS_REDBLOOD_FIXTURES_H
@@ -15,6 +11,8 @@
 #include "redblood/Mesh.h"
 #include "redblood/Cell.h"
 #include "redblood/FlowExtension.h"
+#include "redblood/types.h"
+
 #include "util/Vector3D.h"
 #include "units.h"
 
@@ -107,7 +105,7 @@ namespace hemelb
           FourCubeBasedTestFixture::setUp();
           mesh = redblood::refine(initial_mesh(), refinement());
           mesh *= Dimensionless(CubeSize() - 3) * 0.5;
-          mesh += Dimensionless(CubeSize()) * 0.5;
+          mesh += LatticePosition{Dimensionless(CubeSize()) * 0.5};
         }
 
       protected:

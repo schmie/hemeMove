@@ -1,3 +1,7 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #ifndef HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 #define HEMELB_LB_STREAMERS_NASHZEROTHORDERPRESSUREDELEGATE_H
 
@@ -35,7 +39,7 @@ namespace hemelb
             distribn_t ghostDensity = iolet.GetBoundaryDensity(boundaryId);
 
             // Calculate the velocity at the ghost site, as the component normal to the iolet.
-            util::Vector3D<float> ioletNormal = iolet.GetLocalIolet(boundaryId)->GetNormal();
+	    auto ioletNormal = iolet.GetLocalIolet(boundaryId)->GetNormal().as<float>();
 
             // Note that the division by density compensates for the fact that v_x etc have momentum
             // not velocity.

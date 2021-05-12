@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURES_H
 #define HEMELB_UNITTESTS_REDBLOOD_PARALLEL_FIXTURES_H
@@ -23,7 +19,7 @@ namespace hemelb
       //! \brief gathers mid-domain and egde positions from all procs
       //! \details If there are insufficient number of edges, mid-domains are used instead.
       //! erase removes the components from the first process.
-      std::vector<LatticePosition> GatherSpecialPositions(geometry::LatticeData const & latDat,
+      std::vector<LatticeVector> GatherSpecialPositions(geometry::LatticeData const & latDat,
                                                           size_t mid, size_t edges,
                                                           net::MpiCommunicator const &c)
       {
@@ -32,7 +28,7 @@ namespace hemelb
 
         int const nMids = latDat.GetMidDomainCollisionCount(0);
         int const nEdges = latDat.GetDomainEdgeCollisionCount(0);
-        std::vector<LatticePosition> positions(c.Size() * (mid + edges));
+        std::vector<LatticeVector> positions(c.Size() * (mid + edges));
         std::vector<int> shuf(nMids);
         std::iota(shuf.begin(), shuf.end(), 0);
         std::shuffle(shuf.begin(), shuf.end(), g);
@@ -110,7 +106,7 @@ namespace hemelb
           LatticeEnergy operator()(std::vector<LatticeForceVector> &f) const override
           {
             f.resize(GetNumberOfNodes());
-            std::fill(f.begin(), f.end(), force);
+            std::fill(f.begin(), f.end(), LatticeForceVector{force});
             return 0e0;
           }
           std::unique_ptr<CellBase> cloneImpl() const override

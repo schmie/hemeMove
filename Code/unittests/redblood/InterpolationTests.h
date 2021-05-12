@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_INTERPOLATION_H
-#define HEMELB_UNITTESTS_REDBLOOD_INTERPOLATION_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_INTERPOLATIONTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_INTERPOLATIONTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Interpolation.h"
@@ -60,6 +56,11 @@ namespace hemelb
                                        LatticePosition(-1, 2, 1).Dot(pos),
                                        LatticePosition(0, 0, 1).Dot(pos));
               }
+              // We need to accept grid point and continuous input points
+              LatticePosition operator()(LatticeVector const &pos) const
+              {
+                return operator()(pos.as<double>());
+              }
               LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
               {
                 return operator()(LatticePosition(x, y, z));
@@ -68,6 +69,7 @@ namespace hemelb
 
           struct QuadraticFunction
           {
+              // We need to accept grid point and continuous input points
               LatticePosition operator()(LatticePosition const &pos) const
               {
                 Dimensionless const offset(0);
@@ -77,6 +79,11 @@ namespace hemelb
                                            * (LatticePosition(0, 1, 0).Dot(pos) - offset),
                                        (LatticePosition(0, 0, 1).Dot(pos) - offset)
                                            * (LatticePosition(0, 0, 1).Dot(pos) - offset));
+              }
+              // We need to accept grid point and continuous input points
+              LatticePosition operator()(LatticeVector const &pos) const
+              {
+                return operator()(pos.as<double>());
               }
               LatticePosition operator()(Dimensionless x, Dimensionless y, Dimensionless z) const
               {
@@ -106,7 +113,7 @@ namespace hemelb
               for (size_t j(0); j < incs[i]; ++j, ++iterator)
                 ;
 
-              CPPUNIT_ASSERT(helpers::is_zero(*iterator - vectors[i]));
+              CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), (*iterator - vectors[i]));
               CPPUNIT_ASSERT(iterator.IsValid());
             }
 

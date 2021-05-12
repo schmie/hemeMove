@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UNITTESTS_HELPERS_LATTICEDATAACCESS_H
 #define HEMELB_UNITTESTS_HELPERS_LATTICEDATAACCESS_H
@@ -94,7 +90,7 @@ namespace hemelb
       }
       inline void LatticeDataAccess::ZeroOutForces() const
       {
-        std::fill(latDat->forceAtSite.begin(), latDat->forceAtSite.end(), 0);
+        std::fill(latDat->forceAtSite.begin(), latDat->forceAtSite.end(), LatticeForceVector::Zero());
       }
 
       template<class LATTICE>
@@ -168,7 +164,7 @@ namespace hemelb
           distribn_t const * const siteFOld(site.GetFOld<LATTICE>());
           distribn_t const * const firstFOld = &latDat->oldDistributions[0];
           size_t const indexFOld(siteFOld - firstFOld);
-          latDat->oldDistributions[indexFOld + _i] = _function(pos_real);
+          latDat->newDistributions[indexFOld + _i] = latDat->oldDistributions[indexFOld + _i] = _function(pos_real);
         }
       }
 

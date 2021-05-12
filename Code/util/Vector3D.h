@@ -1,11 +1,7 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_UTIL_VECTOR3D_H
 #define HEMELB_UTIL_VECTOR3D_H
@@ -15,9 +11,7 @@
 #include <ostream>
 #include <algorithm>
 #include <limits>
-#include "util/static_assert.h"
 #include "util/utilityFunctions.h"
-#include "util/Vector3DArithmeticTraits.h"
 
 namespace hemelb
 {
@@ -90,16 +84,13 @@ namespace hemelb
     template<class T>
     class Vector3D : public Vector3DBase
     {
+      static_assert(std::is_arithmetic<T>::value, "Vector3D only allowed with arithmetic types");
       public:
-        /**
-         * The type of the element
-         */
-        typedef T value_type;
+        // The type of the element
+        using value_type = T;
 
-        /**
-         * An iterator over elements of this Vector3D
-         */
-        typedef Vector3DIterator<T> iterator;
+        // An iterator over elements of this Vector3D
+        using iterator = Vector3DIterator<T>;
 
         /**
          * Iterator pointing to first element of the Vector3D.
@@ -127,13 +118,8 @@ namespace hemelb
          */
         T x, y, z;
 
-        /**
-         * Default constructor, instantiates with zeros.
-         */
-        Vector3D() :
-            x(0), y(0), z(0)
-        {
-        }
+        // Default constructor. It's a value type so this has undefined value when default constructed.
+        constexpr Vector3D() = default;
 
         /**
          * Constructor accepting elements
@@ -141,7 +127,7 @@ namespace hemelb
          * @param y-component
          * @param z-component
          */
-        Vector3D(const T iX, const T iY, const T iZ) :
+        constexpr Vector3D(const T iX, const T iY, const T iZ) :
             x(iX), y(iY), z(iZ)
         {
         }
@@ -150,17 +136,45 @@ namespace hemelb
          * Constructor filling in each component with the supplied argument.
          * @param used for all components
          */
-        Vector3D(const T iX) :
+        explicit constexpr Vector3D(const T iX) :
             x(iX), y(iX), z(iX)
         {
         }
+
+        // Copy constructor from Vector3D<this type>
+        constexpr Vector3D(const Vector3D&) = default;
+
+        // Move constructor from Vector3D<this type>
+        //
+        // Note that this doesn't gain us anything, unless T is
+        // usefully moveable. We also don't provide a converting move
+        // c'tor as that will need a copy even if one of the types
+        // involved is moveable.
+        constexpr Vector3D(Vector3D&&) = default;
+
+        // Constructor converting elements from another type
+        template<class U>
+        explicit constexpr Vector3D(const Vector3D<U>& i) :
+	    x(T(i.x)), y(T(i.y)), z(T(i.z))
+        {
+        }
+
+        // Go the other way and create a copy as the supplied type
+        template <class U>
+        Vector3D<U> as() const {
+          return Vector3D<U>{U(x), U(y), U(z)};
+        }
+
+        // Copy and move assignment are both explicitly defaulted
+        constexpr Vector3D& operator=(const Vector3D&) = default;
+        constexpr Vector3D& operator=(Vector3D&&) = default;
 
         /**
          * Get a component by Direction
          * @param lDirection
          * @return The component
          */
-        T GetByDirection(Direction::Direction lDirection)
+        T& GetByDirection(Direction::Direction lDirection)
         {
           switch (lDirection)
           {
@@ -234,21 +248,9 @@ namespace hemelb
         }
 
         /**
-         * Copy constructor. Can perform type conversion.
-         * @param source
-         */
-        template<class OldTypeT>
-        Vector3D(const Vector3D<OldTypeT> & iOldVector3D)
-        {
-          x = (T) (iOldVector3D.x);
-          y = (T) (iOldVector3D.y);
-          z = (T) (iOldVector3D.z);
-        }
-
-        /**
          * Equality
          */
-        bool operator==(const Vector3D<T> right) const
+        constexpr bool operator==(const Vector3D& right) const
         {
           if (x != right.x)
           {
@@ -280,19 +282,34 @@ namespace hemelb
          * Compute the unit vector that points in this direction.
          * @return the unit vector
          */
-        Vector3D GetNormalised() const
+        constexpr Vector3D GetNormalised() const
         {
           Vector3D normed(*this);
           normed.Normalise();
           return normed;
         }
 
+        // Helper traits
+        // Note: standard defines additive (+, -) and multiplicative (*, /, %) categories of arithmetic operators
+        // 
+        // First, result type of doing T OPERATOR decay(scalar)
+        template <typename U>
+	using add_result_t = decltype(std::declval<T>() + std::declval<typename std::decay<U>::type>());
+        template <typename U>
+	using mul_result_t = decltype(std::declval<T>() * std::declval<typename std::decay<U>::type>());
+        // Second, predicate whether that type is the same as T
+        template <typename U>
+	static constexpr bool add_result_same_v = std::is_same<T, add_result_t<U>>::value;
+        template <typename U>
+	static constexpr bool mul_result_same_v = std::is_same<T, mul_result_t<U>>::value;
+
         /**
          * Dot product between this vector and another
          * @param other
          * @return
          */
-        T Dot(const Vector3D& otherVector) const
+        template <typename U, typename RES = mul_result_t<U>>
+        constexpr RES Dot(const Vector3D<U>& otherVector) const
         {
           return (x * otherVector.x + y * otherVector.y + z * otherVector.z);
         }
@@ -302,7 +319,8 @@ namespace hemelb
          * @param V2
          * @return
          */
-        static T Dot(const Vector3D &V1, const Vector3D &V2)
+        template <typename U, typename RES = mul_result_t<U>>
+        constexpr static RES Dot(const Vector3D &V1, const Vector3D<U> &V2)
         {
           return V1.Dot(V2);
         }
@@ -313,12 +331,12 @@ namespace hemelb
          * @param V2
          * @return
          */
-        static Vector3D Cross(const Vector3D& V1, const Vector3D& V2)
+        template <typename U, typename RES = mul_result_t<U>>
+        constexpr static Vector3D<RES> Cross(const Vector3D& V1, const Vector3D<U>& V2)
         {
-          return Vector3D(V1.y * V2.z - V1.z * V2.y,
-                          V1.z * V2.x - V1.x * V2.z,
-                          V1.x * V2.y - V1.y * V2.x);
-
+          return Vector3D<RES>(V1.y * V2.z - V1.z * V2.y,
+			       V1.z * V2.x - V1.x * V2.z,
+			       V1.x * V2.y - V1.y * V2.x);
         }
 
         /**
@@ -326,9 +344,10 @@ namespace hemelb
          * @param other
          * @return
          */
-        Vector3D Cross(const Vector3D& other) const
+        template <typename U, typename RES = mul_result_t<U>>
+	constexpr Vector3D<RES> Cross(const Vector3D<U>& other) const
         {
-          return Cross(*this, other);
+          return Cross<U, RES>(*this, other);
         }
 
         template<class OTHER> Vector3D<OTHER> cast() const
@@ -340,7 +359,7 @@ namespace hemelb
          * Compute the magnitude squared of the vector
          * @return magnitude**2
          */
-        T GetMagnitudeSquared() const
+        constexpr T GetMagnitudeSquared() const
         {
           return this->Dot(*this);
         }
@@ -351,8 +370,7 @@ namespace hemelb
          */
         T GetMagnitude() const
         {
-          HEMELB_STATIC_ASSERT(std::numeric_limits<T>::is_specialized);
-          HEMELB_STATIC_ASSERT(!std::numeric_limits<T>::is_integer);
+          static_assert(!std::is_integral<T>::value, "Vector3D::GetMagnitude only makes sense for floating types");
           return std::sqrt(GetMagnitudeSquared());
         }
 
@@ -361,9 +379,10 @@ namespace hemelb
          * @param right
          * @return this + right
          */
-        Vector3D operator+(const Vector3D right) const
+        template <typename U, typename RES = add_result_t<U>>
+        constexpr Vector3D<RES> operator+(const Vector3D<U>& right) const
         {
-          return Vector3D(x + right.x, y + right.y, z + right.z);
+          return Vector3D<RES>(x + right.x, y + right.y, z + right.z);
         }
 
         /**
@@ -371,7 +390,8 @@ namespace hemelb
          * @param right
          * @return the updated vector
          */
-        Vector3D& operator+=(const Vector3D<T> right)
+        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        constexpr Vector3D& operator+=(const Vector3D<U>& right)
         {
           x += right.x;
           y += right.y;
@@ -384,7 +404,7 @@ namespace hemelb
          * Vector unary negation
          * @return -this
          */
-        Vector3D operator-() const
+        constexpr Vector3D operator-() const
         {
           return Vector3D(-x, -y, -z);
         }
@@ -394,9 +414,10 @@ namespace hemelb
          * @param right
          * @return this - right
          */
-        Vector3D operator-(const Vector3D right) const
+        template <typename U, typename RES = add_result_t<U>>
+        constexpr Vector3D<RES> operator-(const Vector3D<U>& right) const
         {
-          return Vector3D(x - right.x, y - right.y, z - right.z);
+          return Vector3D<RES>(x - right.x, y - right.y, z - right.z);
         }
 
         /**
@@ -404,7 +425,8 @@ namespace hemelb
          * @param right
          * @return this - right
          */
-        Vector3D& operator-=(const Vector3D right)
+        template <typename U, typename = typename std::enable_if<add_result_same_v<U>>::type>
+        constexpr Vector3D& operator-=(const Vector3D<U>& right)
         {
           x -= right.x;
           y -= right.y;
@@ -417,16 +439,25 @@ namespace hemelb
          * @param multiplier
          * @return
          */
-        template<class MultiplierT>
-        Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType> operator*(
-            const MultiplierT multiplier) const
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        friend constexpr Vector3D<RES> operator*(const Vector3D& lhs, const U& rhs)
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, MultiplierT>::operatorReturnType>(x
-                                                                                                     * multiplier,
-                                                                                                 y
-                                                                                                     * multiplier,
-                                                                                                 z
-                                                                                                     * multiplier);
+          return Vector3D<RES>{
+	    lhs.x * rhs,
+	    lhs.y * rhs,
+	    lhs.z * rhs
+          };
+        }
+
+        // For scalar * vector just swap and call above
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        friend constexpr Vector3D<RES> operator*(const U& lhs, const Vector3D& rhs)
+        {
+          return rhs*lhs;
         }
 
         /**
@@ -434,8 +465,8 @@ namespace hemelb
          * @param multiplier
          * @return
          */
-        template<class MultiplierT>
-        Vector3D& operator*=(const MultiplierT multiplier)
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        constexpr Vector3D& operator*=(const U& multiplier)
         {
           x *= multiplier;
           y *= multiplier;
@@ -443,30 +474,23 @@ namespace hemelb
           return *this;
         }
 
-        /**
-         * Division by a scalar
-         * @param divisor
-         * @return
-         */
-        template<class DivisorT>
-        Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType> operator/(
-            const DivisorT divisor) const
+        // Division by a scalar
+        // Return type is a new Vector3D of the type of (T / U)
+        template<class U,
+		 typename = typename std::enable_if<std::is_arithmetic<U>::value>::type,
+		 typename RES = mul_result_t<U>>
+        constexpr Vector3D<RES> operator/(const U& divisor) const
         {
-          return Vector3D<typename Vector3DArithmeticTraits<T, DivisorT>::operatorReturnType>(x
-                                                                                                  / divisor,
-                                                                                              y
-                                                                                                  / divisor,
-                                                                                              z
-                                                                                                  / divisor);
+          return Vector3D<RES>{x / divisor,
+			       y / divisor,
+			       z / divisor};
         }
 
-        /**
-         * In-place divison by a scalar
-         * @param divisor
-         * @return
-         */
-        template<class DivisorT>
-        Vector3D& operator/=(const DivisorT divisor)
+        // In-place divison by a scalar
+        // Only enabled if the type of T/U == T
+        // Returns the updated object
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        constexpr Vector3D& operator/=(const U& divisor)
         {
           x /= divisor;
           y /= divisor;
@@ -478,18 +502,18 @@ namespace hemelb
          * Scalar modulus
          * @param divisor
          */
-        template<class ModuloT>
-        Vector3D operator%(const ModuloT divisor) const
+        template<class U, typename RES = mul_result_t<U>>
+        constexpr Vector3D<RES> operator%(const U& divisor) const
         {
-          return Vector3D(x % divisor, y % divisor, z % divisor);
+          return Vector3D<RES>{x % divisor, y % divisor, z % divisor};
         }
 
         /**
          * In-place scalar modulus
          * @param divisor
          */
-        template<class ModuloT>
-        Vector3D& operator%=(const ModuloT divisor)
+        template<class U, typename = typename std::enable_if<mul_result_same_v<U>>::type>
+        constexpr Vector3D& operator%=(const U& divisor)
         {
           x %= divisor;
           y %= divisor;
@@ -500,7 +524,7 @@ namespace hemelb
         /**
          * Point-wise multiplication
          */
-        Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
+        constexpr Vector3D PointwiseMultiplication(const Vector3D& rightArgument) const
         {
           return Vector3D(x * rightArgument.x, y * rightArgument.y, z * rightArgument.z);
         }
@@ -508,7 +532,7 @@ namespace hemelb
         /**
          * Point-wise division
          */
-        Vector3D PointwiseDivision(const Vector3D& rightArgument) const
+        constexpr Vector3D PointwiseDivision(const Vector3D& rightArgument) const
         {
           return Vector3D(x / rightArgument.x, y / rightArgument.y, z / rightArgument.z);
         }
@@ -519,7 +543,7 @@ namespace hemelb
          *
          * @param vector to compare against
          */
-        void UpdatePointwiseMin(const Vector3D& iCompareVector)
+        constexpr void UpdatePointwiseMin(const Vector3D& iCompareVector)
         {
           x = std::min(x, iCompareVector.x);
 
@@ -534,7 +558,7 @@ namespace hemelb
          *
          * @param vector to compare against
          */
-        void UpdatePointwiseMax(const Vector3D& iCompareVector)
+        constexpr void UpdatePointwiseMax(const Vector3D& iCompareVector)
         {
           x = std::max(x, iCompareVector.x);
 
@@ -549,7 +573,7 @@ namespace hemelb
          * @param vMax
          * @return
          */
-        bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
+        constexpr bool IsInRange(const Vector3D& vMin, const Vector3D& vMax) const
         {
           return NumericalFunctions::IsInRange(x, vMin.x, vMax.x)
               && NumericalFunctions::IsInRange(y, vMin.y, vMax.y)
@@ -560,7 +584,7 @@ namespace hemelb
          * Vector filled with the maximum value for the element type.
          * @return
          */
-        static Vector3D MaxLimit()
+        static constexpr Vector3D MaxLimit()
         {
           return Vector3D(std::numeric_limits<T>::max());
         }
@@ -569,7 +593,7 @@ namespace hemelb
          * Vector filled with the minimum value for the element type.
          * @return
          */
-        static Vector3D MinLimit()
+        static constexpr Vector3D MinLimit()
         {
           return Vector3D(std::numeric_limits<T>::min());
         }
@@ -578,7 +602,7 @@ namespace hemelb
          * Factory for Vector3Ds of ones.
          * @return
          */
-        static Vector3D Ones()
+        static constexpr Vector3D Ones()
         {
           return Vector3D(1);
         }
@@ -587,38 +611,9 @@ namespace hemelb
          * Factory for Vector3Ds of zeros.
          * @return
          */
-        static Vector3D Zero()
+        static constexpr Vector3D Zero()
         {
           return Vector3D(0);
-        }
-
-        /**
-         * Lexicographical comparison between this vector and another one
-         * @param anotherVector vector to compare against
-         * @return true if this vector is lexicographically smaller than anotherVector
-         */
-        bool operator<(const Vector3D anotherVector) const
-        {
-          //! @todo #668 It should be possible to reimplement the method as std::lexicographical_compare(begin(), end(), anotherVector.begin(), anotherVector.end()), if I can get the constness of the iterators right.
-          if (x < anotherVector.x)
-          {
-            return true;
-          }
-          if (x == anotherVector.x)
-          {
-            if (y < anotherVector.y)
-            {
-              return true;
-            }
-            if (y == anotherVector.y)
-            {
-              if (z < anotherVector.z)
-              {
-                return true;
-              }
-            }
-          }
-          return false;
         }
     };
 

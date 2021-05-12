@@ -1,14 +1,10 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLCELL_INTERACTION_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_CELLCELL_INTERACTION_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_CELLCELLINTERACTIONTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_CELLCELLINTERACTIONTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/Cell.h"
@@ -38,7 +34,9 @@ namespace hemelb
           CPPUNIT_TEST (testPairIteratorSinglePair);
           CPPUNIT_TEST (testPairIteratorOnePairPerBox);
           CPPUNIT_TEST (testPairIteratorDiagonalBoxes);
-          CPPUNIT_TEST (testPairIteratorBoxHalo);CPPUNIT_TEST_SUITE_END();
+          CPPUNIT_TEST (testPairIteratorBoxHalo);
+	  CPPUNIT_TEST (testDetailIteratorBase);
+	  CPPUNIT_TEST_SUITE_END();
 
           LatticeDistance const cutoff = 5.0;
           LatticeDistance const halo = 2.0;
@@ -59,6 +57,7 @@ namespace hemelb
           void testPairIteratorDiagonalBoxes();
           void testPairIteratorBoxHalo();
           void testUpdateLentCells();
+	  void testDetailIteratorBase();
       };
 
       void CellCellInteractionTests::testBoxHaloTooBig()
@@ -145,13 +144,13 @@ namespace hemelb
         CPPUNIT_ASSERT(std::distance(empty.first, empty.second) == 0);
         CPPUNIT_ASSERT(std::distance(haloed.first, haloed.second) == 1);
 
-        CPPUNIT_ASSERT(helpers::is_zero(omega.first->first));
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), omega.first->first);
         CPPUNIT_ASSERT(omega.first->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(omega.first->second.nodeIndex == 0 or omega.first->second.nodeIndex == 1);
         CPPUNIT_ASSERT(omega.first->second.nearBorder == (size_t) Borders::CENTER);
         DivideConquer<CellReference>::const_iterator other = omega.first;
         ++other;
-        CPPUNIT_ASSERT(helpers::is_zero(other->first));
+        CPPUNIT_ASSERT_EQUAL(LatticeVector::Zero(), other->first);
         CPPUNIT_ASSERT(other->second.cellIterator == cells.begin());
         CPPUNIT_ASSERT(other->second.nodeIndex == 0 or other->second.nodeIndex == 1);
         CPPUNIT_ASSERT(other->second.nodeIndex != omega.first->second.nodeIndex);
@@ -546,6 +545,46 @@ namespace hemelb
         CPPUNIT_ASSERT_EQUAL(3ul, dnc.size());
       }
 
+      void CellCellInteractionTests::testDetailIteratorBase()
+      {
+	// Mutable and constant iterators
+	using mut = DivideConquerCells::iterator;
+	using con = DivideConquerCells::const_iterator;
+
+        auto cells = TwoPancakeSamosas<>(cutoff);
+	DivideConquerCells m_dnc(cells, cutoff, halo);
+	DivideConquerCells const c_dnc(cells, cutoff, halo);
+
+	auto m_iter = m_dnc.begin();
+	auto c_iter = c_dnc.begin();
+
+	static_assert(std::is_same<decltype(m_iter), detail::iterator_base<DivideConquer<CellReference>>>::value,
+		      "");
+	static_assert(std::is_same<decltype(c_iter), detail::iterator_base<DivideConquer<CellReference> const>>::value,
+		      "");
+
+	{
+	  // Copy construction
+	  mut tmp1{m_iter};
+	  con tmp2{c_iter};
+	  con tmp3{m_iter};
+	  // Not allowed
+	  // mut tmp4{c_iter};
+	  CPPUNIT_ASSERT(tmp1 == m_iter);
+	  CPPUNIT_ASSERT(tmp2 == c_iter);
+	}
+
+	{
+	  // Copy assignment
+	  mut tmp1 = m_iter;
+	  con tmp2 = c_iter;
+	  con tmp3 = m_iter;
+	  // Not allowed
+	  //mut tmp4 = c_iter;
+	  CPPUNIT_ASSERT(tmp1 == m_iter);
+	  CPPUNIT_ASSERT(tmp2 == c_iter);
+	}
+      }
       CPPUNIT_TEST_SUITE_REGISTRATION (CellCellInteractionTests);
     }
   }

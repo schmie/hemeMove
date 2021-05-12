@@ -1,17 +1,14 @@
-// 
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-// 
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work 
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-// 
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_LB_STABILITYTESTER_H
 #define HEMELB_LB_STABILITYTESTER_H
 
 #include "net/PhasedBroadcastRegular.h"
 #include "geometry/LatticeData.h"
+#include "configuration/MonitoringConfig.h"
 
 namespace hemelb
 {
@@ -35,7 +32,7 @@ namespace hemelb
       public:
         StabilityTester(const geometry::LatticeData * iLatDat, net::Net* net,
                         SimulationState* simState, reporting::Timers& timings,
-                        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig) :
+                        const hemelb::configuration::MonitoringConfig* testerConfig) :
             net::PhasedBroadcastRegular<>(net, simState, SPREADFACTOR), mLatDat(iLatDat),
                 mSimState(simState), timings(timings), testerConfig(testerConfig)
         {
@@ -309,7 +306,7 @@ namespace hemelb
         reporting::Timers& timings;
 
         /** Object containing the user-provided configuration for this class */
-        const hemelb::configuration::SimConfig::MonitoringConfig* testerConfig;
+        const hemelb::configuration::MonitoringConfig* testerConfig;
     };
   }
 }

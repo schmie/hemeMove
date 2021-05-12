@@ -1,18 +1,15 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
-#ifndef HEMELB_UNITTESTS_REDBLOOD_FLOWEXTENSION_TESTS_H
-#define HEMELB_UNITTESTS_REDBLOOD_FLOWEXTENSION_TESTS_H
+#ifndef HEMELB_UNITTESTS_REDBLOOD_FLOWEXTENSIONTESTS_H
+#define HEMELB_UNITTESTS_REDBLOOD_FLOWEXTENSIONTESTS_H
 
 #include <cppunit/TestFixture.h>
 #include "redblood/FlowExtension.h"
-#include "redblood/io.h"
+#include "redblood/xmlIO.h"
+#include "redblood/RBCConfig.h"
 #include "unittests/redblood/Fixtures.h"
 #include "util/Vector3D.h"
 #include "units.h"
@@ -135,7 +132,7 @@ namespace hemelb
                       "    <fadelength units=\"m\" value=\"0.05\" />"
                       "  </flowextension>"
                       "</inlet>");
-            util::UnitConverter converter(0.5, 0.6, 0.7);
+            util::UnitConverter converter(0.5, 0.6, PhysicalPosition{0.7}, DEFAULT_FLUID_DENSITY_Kg_per_m3, 0.0);
             auto flow = readFlowExtension(doc.FirstChildElement("inlet"), converter);
             // Normal is opposite direction compared to XML inlet definition
             CPPUNIT_ASSERT_DOUBLES_EQUAL(-2e0 / std::sqrt(2),

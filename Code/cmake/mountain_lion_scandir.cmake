@@ -1,3 +1,9 @@
+# This file is part of HemeLB and is Copyright (C)
+# the HemeLB team and/or their institutions, as detailed in the
+# file AUTHORS. This software is provided under the terms of the
+# license in the file LICENSE.
+include_guard()
+
 include(CheckCXXSourceCompiles)
 # mountain lion changed the api of scandir from BSD to LINUX style
 CHECK_CXX_SOURCE_COMPILES("
@@ -25,4 +31,4 @@ int main(int count, char** v)
       int file_count = scandir(pathname.c_str(), &files, selectOnlyContents, alphasort);
       return 0;
     }"
-LINUX_SCANDIR)
+  LINUX_SCANDIR)

@@ -1,11 +1,7 @@
-//
-// Copyright (C) University College London, 2007-2012, all rights reserved.
-//
-// This file is part of HemeLB and is CONFIDENTIAL. You may not work
-// with, install, use, duplicate, modify, redistribute or share this
-// file, or any part thereof, other than as allowed by any agreement
-// specifically made by you with University College London.
-//
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 
 #ifndef HEMELB_REDBLOOD_CELL_H
 #define HEMELB_REDBLOOD_CELL_H
@@ -15,15 +11,15 @@
 #include <set>
 #include <utility>
 
-#include "redblood/Mesh.h"
 #include "redblood/CellBase.h"
-#include "redblood/Node2Node.h"
 #include "units.h"
 
 namespace hemelb
 {
   namespace redblood
   {
+    class Mesh;
+
     //! Deformable cell for which energy and forces can be computed
     class Cell : public CellBase
     {
@@ -149,17 +145,6 @@ namespace hemelb
         and (not std::is_pod<Cell::Moduli>::value),
         "Explicit type characteristics"
     );
-
-    //! Write cell-mesh to file in Timm's format
-    void writeMesh(std::ostream &, std::shared_ptr<CellBase const>, util::UnitConverter const&);
-    //! Write cell-mesh to file in Timm's format
-    void writeMesh(std::string const&, std::shared_ptr<CellBase const>, util::UnitConverter const&);
-    //! Write cell-mesh to file in VTK XML format including individual forces
-    void writeVTKMeshWithForces(std::ostream &, std::shared_ptr<Cell const>,
-                                util::UnitConverter const&);
-    //! Write cell-mesh to file in VTK XML format including individual forces
-    void writeVTKMeshWithForces(std::string const &, std::shared_ptr<Cell const>,
-                                util::UnitConverter const&);
 
   }
 } // namespace hemelb::redblood

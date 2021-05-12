@@ -1,3 +1,7 @@
+// This file is part of HemeLB and is Copyright (C)
+// the HemeLB team and/or their institutions, as detailed in the
+// file AUTHORS. This software is provided under the terms of the
+// license in the file LICENSE.
 #include "lb/iolets/InOutLet.h"
 
 namespace hemelb
@@ -13,10 +17,11 @@ namespace hemelb
 
       namespace
       {
-        unsigned SmallestMagnitudeComponent(const LatticeVector r)
+	template <typename T>
+        unsigned SmallestMagnitudeComponent(const util::Vector3D<T>& r)
         {
           // Return which direction has the smallest component
-          LatticeVector rSq = r.PointwiseMultiplication(r);
+          const auto rSq = r.PointwiseMultiplication(r);
           if (rSq.x < rSq.y)
           {
             if (rSq.x < rSq.z)
