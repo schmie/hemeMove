@@ -147,15 +147,8 @@ namespace hemelb
             localTau = tRheologyModel::CalculateTauForShearRate(shear_rate, hydroVars.density, mSpaceStep, mTimeStep);
 
             // In some rheology models viscosity tends to infinity as shear rate goes to zero.
-            /// @todo: #633 refactor
-#ifdef HAVE_STD_ISNAN
             assert( (!std::isinf(localTau)) );
             assert( (!std::isnan(localTau)) );
-#endif
-#ifdef HAVE_ISNAN
-            assert( (!isinf(localTau)) );
-            assert( (!isnan(localTau)) );
-#endif
           }
       };
     }
