@@ -12,6 +12,7 @@
 #include "util/unique.h"
 #include "lb/InitialCondition.h"
 #include "lb/InitialCondition.hpp"
+#include <tuple>
 
 namespace hemelb
 {
@@ -280,44 +281,23 @@ namespace hemelb
       // Do any cleanup steps necessary on boundary nodes
       site_t offset = mLatDat->GetMidDomainSiteCount();
 
+      const std::tuple<tMidFluidCollision*, tWallCollision*, tInletCollision*,
+      tOutletCollision*, tInletWallCollision*, tOutletWallCollision*> 
+      COLLISIONS {
+        mMidFluidCollision, mWallCollision, mInletCollision,
+        mOutletCollision, mInletWallCollision, mOutletWallCollision
+      };
+
+      const tCollisionCountFn DECCFP = &geometry::LatticeData::GetDomainEdgeCollisionCount;
+      const tCollisionCountFn MDCCFP = &geometry::LatticeData::GetMidDomainCollisionCount;
+
       timings[hemelb::reporting::Timers::lb_calc].Start();
 
-      //TODO yup, this is horrible. If you read this, please improve the following code.
-      PostStep(mMidFluidCollision, offset, mLatDat->GetDomainEdgeCollisionCount(0));
-      offset += mLatDat->GetDomainEdgeCollisionCount(0);
-
-      PostStep(mWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(1));
-      offset += mLatDat->GetDomainEdgeCollisionCount(1);
-
-      PostStep(mInletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(2));
-      offset += mLatDat->GetDomainEdgeCollisionCount(2);
-
-      PostStep(mOutletCollision, offset, mLatDat->GetDomainEdgeCollisionCount(3));
-      offset += mLatDat->GetDomainEdgeCollisionCount(3);
-
-      PostStep(mInletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(4));
-      offset += mLatDat->GetDomainEdgeCollisionCount(4);
-
-      PostStep(mOutletWallCollision, offset, mLatDat->GetDomainEdgeCollisionCount(5));
+      CallPostStep(DECCFP, COLLISIONS, offset);
 
       offset = 0;
 
-      PostStep(mMidFluidCollision, offset, mLatDat->GetMidDomainCollisionCount(0));
-      offset += mLatDat->GetMidDomainCollisionCount(0);
-
-      PostStep(mWallCollision, offset, mLatDat->GetMidDomainCollisionCount(1));
-      offset += mLatDat->GetMidDomainCollisionCount(1);
-
-      PostStep(mInletCollision, offset, mLatDat->GetMidDomainCollisionCount(2));
-      offset += mLatDat->GetMidDomainCollisionCount(2);
-
-      PostStep(mOutletCollision, offset, mLatDat->GetMidDomainCollisionCount(3));
-      offset += mLatDat->GetMidDomainCollisionCount(3);
-
-      PostStep(mInletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(4));
-      offset += mLatDat->GetMidDomainCollisionCount(4);
-
-      PostStep(mOutletWallCollision, offset, mLatDat->GetMidDomainCollisionCount(5));
+      CallPostStep(MDCCFP, COLLISIONS, offset);
 
       timings[hemelb::reporting::Timers::lb_calc].Stop();
       timings[hemelb::reporting::Timers::lb].Stop();
