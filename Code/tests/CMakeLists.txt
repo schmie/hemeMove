@@ -7,12 +7,16 @@ hemelb_dependency(catch2 use)
 
 add_executable(hemelb-tests)
 
+target_compile_definitions(hemelb-tests PRIVATE HEMELB_DOING_UNITTESTS)
+
 target_sources(hemelb-tests PRIVATE ${root_sources})
 
 # ReporterTests directly use ctemplate
+# FlowExtensionTests directly uses tinyxml
 target_link_libraries(hemelb-tests PRIVATE
   Catch2::Catch2
   CTemplate::CTemplate
+  TinyXML::TinyXML
   ${heme_libraries}
   ${MPI_LIBRARIES})
 INSTALL(TARGETS hemelb-tests RUNTIME DESTINATION bin)
@@ -39,6 +43,7 @@ add_subdirectory(io)
 add_subdirectory(lb)
 add_subdirectory(multiscale)
 add_subdirectory(net)
+add_subdirectory(redblood)
 add_subdirectory(reporting)
 add_subdirectory(util)
 add_subdirectory(vis)
